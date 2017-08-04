@@ -34,6 +34,9 @@ var dbCheckOK bool // default false
 // dbPtr is a pointer to the central connection to the database, used by all database requests.
 var dbPtr *sqlx.DB
 
+// dbVariant is the variant of the database that the dbPtr is connected to.
+var dbVariant string
+
 // Check that the database is configured correctly and that all the required tables exist.
 // It must be the first function called in this package.
 func Check(runtime *env.Runtime) bool {
@@ -74,6 +77,7 @@ func Check(runtime *env.Runtime) bool {
 	// MySQL and Percona share same version scheme (e..g 5.7.10).
 	// MariaDB starts at 10.2.x
 	sqlVariant := GetSQLVariant(dbComment)
+	dbVariant = sqlVariant
 	log.Info("Database checks: SQL variant " + sqlVariant)
 	log.Info("Database checks: SQL version " + version)
 
@@ -99,7 +103,7 @@ func Check(runtime *env.Runtime) bool {
 	}
 
 	{ // check the MySQL character set and collation
-		if charset != "utf8" {
+		if charset != "utf8" && charset != "utf8mb4" {
 			log.Error("MySQL character set not utf8:", errors.New(charset))
 			web.SiteInfo.Issue = "MySQL character set not utf8: " + charset
 			runtime.Flags.SiteMode = web.SiteModeBadDB

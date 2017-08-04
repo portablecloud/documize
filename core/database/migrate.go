@@ -16,6 +16,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"fmt"
+	log2 "log"
 	"os"
 	"regexp"
 	"sort"
@@ -249,6 +250,13 @@ func processSQLfile(tx *sqlx.Tx, buf []byte) error {
 	stmts := getStatements(buf)
 
 	for _, stmt := range stmts {
+
+		if dbVariant == sqlVariantMariaDB {
+			// MariaDB has no support for JSON
+			stmt = strings.Replace(stmt, "` JSON", "` TEXT", -1)
+		}
+
+		log2.Print(stmt)
 
 		_, err := tx.Exec(stmt)
 		if err != nil {
